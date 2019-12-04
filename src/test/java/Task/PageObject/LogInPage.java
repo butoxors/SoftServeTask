@@ -5,7 +5,7 @@ import org.openqa.selenium.support.FindBy;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 
 public class LogInPage extends BasePage{
-
+    private String _logInURL = "https://www.reddit.com/login/";
 
     @FindBy(xpath = "//input[@name='username']")
     private WebElement _usernameField;
@@ -23,7 +23,11 @@ public class LogInPage extends BasePage{
         _usernameField.sendKeys(username);
         _passwordField.sendKeys(password);
 
-        //_logInBtn.click();
+        _logInBtn.click();
+    }
+
+    public void goToLogInPage(){
+        driver.get(_logInURL);
     }
 
 }
