@@ -58,7 +58,7 @@ public class MainTest {
     public void seeSubscribedsSubreddits(){
         _homePage = new HomePage();
         _homePage.init(_driver);
-        _homePage.hoHome();
+        //_homePage.hoHome();
 
         int countOfPosts = _homePage.postCount();
 
@@ -76,21 +76,35 @@ public class MainTest {
         _homePage.selectPost(randomPost);
 
         String currentUrl = _driver.getCurrentUrl();
-
-        Assert.assertTrue(currentUrl.contains(expectedPost));
         System.out.println("Current id is " + expectedPost + "\r\nLink: " + currentUrl);
+        Assert.assertTrue(currentUrl.contains(expectedPost));
     }
 
     @Test(priority = 1)
     public void createComment(){
         _postPage = new PostPage();
         _postPage.init(_driver);
+
         try {
             _postPage.createComment(":D");
         }catch (Exception ex){}
         WebElement post = _postPage.getCommentByUsername(u.getUsername().toLowerCase());
+        if (post != null)
+            System.out.println(post.getAttribute("outerHTML"));
+        else
+            System.out.println("User hasn't found!");
+    }
 
-        System.out.println(post.getAttribute("innerText"));
+    @Test(priority = 2)
+    public void upVotePost() {
+        String actionResult = _postPage.upVote();
+        Assert.assertTrue(Boolean.valueOf(actionResult));
+    }
+
+    @Test(priority = 2)
+    public void downVotePost(){
+        String actionResult = _postPage.downVote();
+        Assert.assertTrue(Boolean.valueOf(actionResult));
     }
 
     @AfterSuite

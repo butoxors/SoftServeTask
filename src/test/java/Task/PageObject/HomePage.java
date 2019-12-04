@@ -1,5 +1,6 @@
 package Task.PageObject;
 
+import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.support.FindAll;
@@ -28,7 +29,6 @@ public class HomePage extends BasePage{
     }
 
     public void selectPost(int index){
-        Actions actions = new Actions(driver);
-        actions.moveToElement(_posts.get(index)).click().build().perform();
+        actions.moveToElement(_posts.get(index).findElement(By.tagName("h3"))).click().build().perform();
     }
 }
