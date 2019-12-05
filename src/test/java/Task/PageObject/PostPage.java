@@ -1,12 +1,15 @@
 package Task.PageObject;
 
 import org.openqa.selenium.By;
+import org.openqa.selenium.JavascriptExecutor;
+import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.FindAll;
 import org.openqa.selenium.support.FindBy;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 
-import java.util.List;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 public class PostPage extends BasePage{
     @FindBy(xpath = "//div[contains(@class, 'Post')]")
@@ -18,47 +21,98 @@ public class PostPage extends BasePage{
     @FindBy(xpath = "//button[@type='submit']")
     private WebElement _sendCommentBtn;
 
+    @FindBy(xpath = "//button[@title='Close']")
+    private  WebElement _closePost;
+
     @FindAll({
             @FindBy(xpath = "//div[contains(@class, 'Comment')]")
     })
     private List<WebElement> _actualComments;
 
-    private By upVote = By.xpath(".//button[@aria-label='upvote' and @data-click-id='upvote']");
-    private By downVote = By.xpath(".//button[@aria-label='downvote' and @data-click-id='downvote']");
+    @FindAll({
+                @FindBy(xpath = "//div[@class='_1E9mcoVn4MYnuBQSVDt1gC']")
+    })
+    private List<WebElement> _voteBlocks;
 
-    public void createComment(String commentText) throws InterruptedException {
-        wait.until(ExpectedConditions.visibilityOf(_commentField));
+    @FindBy(xpath = "//button[@role='menuitem' and contains(@id, 'Sort')]")
+    private WebElement _sortBtn;
 
-        actions.moveToElement(_commentField).click().sendKeys(commentText).build().perform();
+    private By _sortMenus = By.xpath("//div[@role='menu']//a[contains(@href, 'new')]");
+    private By _commentAuthor = By.xpath(".//a[contains(@href, '/user/')]");
+    private By _commentTimePosted = By.xpath(".//*[text()[contains(., 'ago')]]");
+    private By _actualCommentTime = By.xpath("//div[@class='HQ2VJViRjokXpRbJzPvvc']");
 
-        //_sendCommentBtn.click();
+
+
+    private By _upVoteXPath = By.xpath(".//button[@aria-label='upvote' and contains(@id, 'upvote-button')]");
+    private By _downVoteXPath = By.xpath(".//button[@aria-label='downvote' and @data-click-id='downvote']");
+
+    private JavascriptExecutor js;
+
+    public void createComment(String commentText) {
+        try {
+            wait.until(ExpectedConditions.visibilityOf(_commentField));
+
+            /*actions.moveToElement(_commentField).click()
+                    .sendKeys(commentText)
+                    .moveToElement(_sendCommentBtn)
+                    .click().build().perform();*/
+        }catch (Exception ex){}
     }
 
-    public WebElement getCommentByUsername(String username){
+    public Map<String, String> getCommentByUsername(String username) {
+        Map<String, String> userInfo = new HashMap<>();
+
+        wait.until(ExpectedConditions.elementToBeClickable(_sortBtn));
+        actions.moveToElement(_sortBtn).click().pause(3000).build().perform();
+
+        wait.until(ExpectedConditions.visibilityOfElementLocated(_sortMenus));
+
+        actions.moveToElement(driver.findElement(_sortMenus))
+                .click().build().perform();
+
         for (WebElement comment:
                 _actualComments) {
 
-            List<WebElement> commentInfo = comment.findElements(By.xpath(".//a"));
+            String author = comment.findElement(_commentAuthor).getText().trim().toLowerCase();
 
-            System.out.println("Exist user: " + commentInfo.get(0).getText()
-            + "; his comment time: " + commentInfo.get(1).getText());
+            WebElement commentTime = comment.findElement(_commentTimePosted);
+
+            actions.moveToElement(commentTime).clickAndHold().pause(3).build().perform();
+
+            String time = driver.findElement(_actualCommentTime).getAttribute("innerText");
+
+            time = time.substring(0, time.indexOf('G') - 4);
+
+            if (author.contains(username)){
+                userInfo.put(author, " '" + time + "'");
+            }
         }
-        return null;
+        return userInfo;
     }
 
-    public String upVote() {
-        WebElement upVoteElement = _mainPost.findElement(upVote);
-
-        upVoteElement.click();
-        System.out.println(upVoteElement.getAttribute("aria-pressed"));
-        return upVoteElement.getAttribute("aria-pressed");
+    public boolean upVote() {
+        return pushVoteBtn(0, _upVoteXPath);
     }
 
-    public String downVote(){
-        WebElement downVoteElement = _mainPost.findElement(downVote);
+    public boolean downVote(){
+        return pushVoteBtn(0, _downVoteXPath);
+    }
 
-        downVoteElement.click();
-        System.out.println(downVoteElement.getAttribute("aria-pressed"));
-        return downVoteElement.getAttribute("aria-pressed");
+    private boolean pushVoteBtn(int index, By by){
+        WebElement voteBtn = _voteBlocks.get(index).findElement(by);
+
+        js.executeScript("arguments[0].click()", voteBtn);
+        Boolean status = Boolean.valueOf(voteBtn.getAttribute("aria-pressed"));
+
+        System.out.println("Post has voted, result: " + status.toString());
+
+        return status;
+    }
+
+    @Override
+    public void init(WebDriver driver) {
+        super.init(driver);
+        js = (JavascriptExecutor) driver;
     }
 }
