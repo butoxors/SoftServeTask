@@ -10,11 +10,15 @@ import Task.PageObject.LogInPage;
 import Task.PageObject.PostPage;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
 import org.testng.Assert;
 import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
+import java.util.Map;
 
 public class MainTest {
     private LogInPage _logInPage;
@@ -23,42 +27,42 @@ public class MainTest {
 
     private WebDriver _driver;
 
-    private User u;
+    private User localUser;
 
     @BeforeSuite
     public void setUp() throws Exception {
         _driver = DriverFactory.getDriver(DriverType.CHROME);
         _driver.manage().window().maximize();
 
-        u = GsonHelper.deserialize(FileHelper.read());
+        localUser = GsonHelper.deserialize(FileHelper.read());
+
     }
 
 
     @Test//(dataProvider = "getOptions", dataProviderClass = DataProviders.class)
     public void logInCase(){
-
         _logInPage = new LogInPage();
         _logInPage.init(_driver);
         _logInPage.goToLogInPage();
-        _logInPage.logIn(u.getUsername(), u.getPassword());
+        _logInPage.logIn(localUser.getUsername(), localUser.getPassword());
 
-        String expected = "";
-
-        expected = _logInPage.getElement(By.xpath("//span[text()='" + u.getUsername().toLowerCase() + "']")).getAttribute("innerText");
+        _homePage = new HomePage();
+        _homePage.init(_driver);
+        String actualUsername = _homePage.getActualUsername();
 
         Assert.assertEquals(
-                u.getUsername().toLowerCase(),
-                expected);
+                localUser.getUsername().toLowerCase(),
+                actualUsername);
+
         System.out.println(
-                "Actual username: " + u.getUsername().toLowerCase()
-                + "\r\nExpected username: " + expected);
+                "Actual username: " + localUser.getUsername().toLowerCase()
+                + "\r\nExpected username: " + actualUsername);
     }
 
     @Test
     public void seeSubscribedsSubreddits(){
         _homePage = new HomePage();
         _homePage.init(_driver);
-        //_homePage.hoHome();
 
         int countOfPosts = _homePage.postCount();
 
@@ -81,30 +85,38 @@ public class MainTest {
     }
 
     @Test(priority = 1)
-    public void createComment(){
+    public void createComment() {
         _postPage = new PostPage();
         _postPage.init(_driver);
 
         try {
             _postPage.createComment(":D");
         }catch (Exception ex){}
-        WebElement post = _postPage.getCommentByUsername(u.getUsername().toLowerCase());
-        if (post != null)
-            System.out.println(post.getAttribute("outerHTML"));
-        else
-            System.out.println("User hasn't found!");
+        Map<String, String> userInfo = _postPage.getCommentByUsername(localUser.getUsername().toLowerCase());
+
+        Assert.assertNotNull(userInfo);
+
+        SimpleDateFormat format = new SimpleDateFormat("dd MMM yyyy hh:mm a", Locale.US);
+        Date date = new Date(System.currentTimeMillis());
+        String currentDate = format.format(date) + "'" + localUser.getUsername().toLowerCase() + "'";
+
+        for (Map.Entry<String, String> info: userInfo.entrySet()){
+            System.out.println("User: " + info.getKey() + "; Time to posted comment: " + info.getValue());
+            Assert.assertEquals(currentDate, info.getValue());
+        }
+
     }
 
     @Test(priority = 2)
     public void upVotePost() {
-        String actionResult = _postPage.upVote();
-        Assert.assertTrue(Boolean.valueOf(actionResult));
+        boolean actionResult = _postPage.upVote();
+        Assert.assertTrue(actionResult);
     }
 
-    @Test(priority = 2)
-    public void downVotePost(){
-        String actionResult = _postPage.downVote();
-        Assert.assertTrue(Boolean.valueOf(actionResult));
+    @Test(priority = 3)
+    public void downVotePost() {
+        boolean actionResult = _postPage.downVote();
+        Assert.assertTrue(actionResult);
     }
 
     @AfterSuite
