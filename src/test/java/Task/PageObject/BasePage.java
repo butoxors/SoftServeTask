@@ -1,6 +1,7 @@
 package Task.PageObject;
 
 import org.openqa.selenium.By;
+import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.interactions.Actions;
@@ -12,13 +13,15 @@ public class BasePage implements IPage{
     protected WebDriver driver;
     protected WebDriverWait wait;
     protected Actions actions;
+    protected JavascriptExecutor js;
 
     @Override
     public void init(WebDriver driver) {
         PageFactory.initElements(driver, this);
         this.driver = driver;
-        wait = new WebDriverWait(this.driver, 3);
+        wait = new WebDriverWait(this.driver, 5);
         actions = new Actions(driver);
+        js = (JavascriptExecutor) driver;
     }
 
     public WebElement getElement(By by){

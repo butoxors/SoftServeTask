@@ -4,20 +4,18 @@ import Task.DriverFactory.DriverFactory;
 import Task.DriverFactory.DriverType;
 import Task.Helpers.FileHelper;
 import Task.Helpers.GsonHelper;
+import Task.Helpers.dateTimeHelper;
 import Task.Models.User;
 import Task.PageObject.HomePage;
 import Task.PageObject.LogInPage;
 import Task.PageObject.PostPage;
-import org.openqa.selenium.By;
+import org.openqa.selenium.NoAlertPresentException;
 import org.openqa.selenium.WebDriver;
 import org.testng.Assert;
 import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Locale;
 import java.util.Map;
 
 public class MainTest {
@@ -29,6 +27,8 @@ public class MainTest {
 
     private User localUser;
 
+    private String _commentText = ":D";
+
     @BeforeSuite
     public void setUp() throws Exception {
         _driver = DriverFactory.getDriver(DriverType.CHROME);
@@ -37,7 +37,6 @@ public class MainTest {
         localUser = GsonHelper.deserialize(FileHelper.read());
 
     }
-
 
     @Test//(dataProvider = "getOptions", dataProviderClass = DataProviders.class)
     public void logInCase(){
@@ -60,7 +59,7 @@ public class MainTest {
     }
 
     @Test
-    public void seeSubscribedsSubreddits(){
+    public void seeSubscribedSubreddits(){
         _homePage = new HomePage();
         _homePage.init(_driver);
 
@@ -70,54 +69,55 @@ public class MainTest {
         System.out.println("Count of posts: " + countOfPosts);
     }
 
-    @Test
-    public void viewOneOfMySubscribedSubreddits(){
-        int randomPost = 1;
-        System.out.println("Number of post is: '" + randomPost + "'");
+    @Test(dependsOnMethods = "seeSubscribedSubreddits")
+    public void upVotePost() {
+        boolean actionResult = _homePage.upVote();
+        Assert.assertTrue(actionResult);
+    }
 
-        String expectedPost = _homePage.getPostId(randomPost);
-
-        _homePage.selectPost(randomPost);
-
-        String currentUrl = _driver.getCurrentUrl();
-        System.out.println("Current id is " + expectedPost + "\r\nLink: " + currentUrl);
-        Assert.assertTrue(currentUrl.contains(expectedPost));
+    @Test(dependsOnMethods = "seeSubscribedSubreddits")
+    public void downVotePost() {
+        boolean actionResult = _homePage.downVote();
+        Assert.assertTrue(actionResult);
     }
 
     @Test(priority = 1)
+    public void viewOneOfMySubscribedSubreddits(){
+        int postNumber = 0;
+        System.out.println("Number of post is: '" + postNumber + 1 + "'");
+
+        String expectedPost = _homePage.getPostId(postNumber);
+
+        _homePage.selectPost(postNumber);
+
+        String currentUrl = _driver.getCurrentUrl();
+        System.out.println("Current `id` is `" + expectedPost + "`\r\nLink: " + currentUrl);
+        Assert.assertTrue(currentUrl.contains(expectedPost));
+    }
+
+    @Test(priority = 2)
     public void createComment() {
         _postPage = new PostPage();
         _postPage.init(_driver);
 
-        try {
-            _postPage.createComment(":D");
-        }catch (Exception ex){}
-        Map<String, String> userInfo = _postPage.getCommentByUsername(localUser.getUsername().toLowerCase());
+        _postPage.createComment(_commentText);
 
-        Assert.assertNotNull(userInfo);
+        Map<String, String> userInfo = _postPage.getCommentsByUsername(localUser.getUsername().toLowerCase());
 
-        SimpleDateFormat format = new SimpleDateFormat("dd MMM yyyy hh:mm a", Locale.US);
-        Date date = new Date(System.currentTimeMillis());
-        String currentDate = format.format(date) + "'" + localUser.getUsername().toLowerCase() + "'";
+        for (Map.Entry<String, String> info : userInfo.entrySet()){
+            String commentInfo = dateTimeHelper.makeCommentInfo(info.getKey()) + info.getValue();
 
-        for (Map.Entry<String, String> info: userInfo.entrySet()){
-            System.out.println("User: " + info.getKey() + "; Time to posted comment: " + info.getValue());
-            Assert.assertEquals(currentDate, info.getValue());
+            String currentInfo = dateTimeHelper.generateCurrentTime() + " '" + localUser.getUsername().toLowerCase() + "'";
+            System.out.println("Current time : " + currentInfo);
+
+            System.out.println("Comment time : " + commentInfo);
+
+            Assert.assertEquals(currentInfo, commentInfo);
         }
 
+        Assert.assertTrue(userInfo.size() > 0);
     }
 
-    @Test(priority = 2)
-    public void upVotePost() {
-        boolean actionResult = _postPage.upVote();
-        Assert.assertTrue(actionResult);
-    }
-
-    @Test(priority = 3)
-    public void downVotePost() {
-        boolean actionResult = _postPage.downVote();
-        Assert.assertTrue(actionResult);
-    }
 
     @AfterSuite
     public final void tearDown(){
