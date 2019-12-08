@@ -59,7 +59,7 @@ public class MainTest {
     }
 
     @Test
-    public void seeSubscribedSubreddits(){
+    public void seeSubscribedSubreddits() {
         _homePage = new HomePage();
         _homePage.init(_driver);
 
@@ -102,12 +102,14 @@ public class MainTest {
 
         _postPage.createComment(_commentText);
 
+        String currentInfo = dateTimeHelper.generateCurrentTime() + " '" + localUser.getUsername().toLowerCase() + "'";
+
         Map<String, String> userInfo = _postPage.getCommentsByUsername(localUser.getUsername().toLowerCase());
 
         for (Map.Entry<String, String> info : userInfo.entrySet()){
             String commentInfo = dateTimeHelper.makeCommentInfo(info.getKey()) + info.getValue();
 
-            String currentInfo = dateTimeHelper.generateCurrentTime() + " '" + localUser.getUsername().toLowerCase() + "'";
+
             System.out.println("Current time : " + currentInfo);
 
             System.out.println("Comment time : " + commentInfo);
@@ -117,7 +119,6 @@ public class MainTest {
 
         Assert.assertTrue(userInfo.size() > 0);
     }
-
 
     @AfterSuite
     public final void tearDown(){
