@@ -30,14 +30,16 @@ public class PostPage extends BasePage{
     public void createComment(String commentText) {
         wait.until(ExpectedConditions.visibilityOf(_commentField));
 
-        js.executeScript("window.scrollBy(0, arguments[0]);", 500);
+        WebElement postBottom = driver.findElement(By.xpath("//div[@class='_3-miAEojrCvx_4FQ8x3P-s']"));
+
+        js.executeScript("arguments[0].scrollIntoView({behavior: 'smooth'});", postBottom);
 
         actions
-                .moveToElement(_sendCommentBtn)
-                .click(_commentField).sendKeys(commentText)
+                .moveToElement(_commentField)
+                .click().sendKeys(commentText)
                 .pause(1000)
                 .click(_sendCommentBtn)
-                .pause(5000)
+                .pause(1000)
                 .build().perform();
     }
 
@@ -52,9 +54,10 @@ public class PostPage extends BasePage{
             String author = comment.findElement(_commentAuthor).getText().trim().toLowerCase();
 
             if (author.contains(username)){
+                System.out.println("User " + username + " has found");
                 WebElement commentTime = comment.findElement(_commentTimePosted);
 
-                actions.moveToElement(comment).moveToElement(commentTime).clickAndHold().pause(5000).build().perform();
+                actions.moveToElement(comment).moveToElement(commentTime).clickAndHold().pause(1000).build().perform();
 
                 String time = driver.findElement(_tooltipCommentTime).getAttribute("innerText");
 
