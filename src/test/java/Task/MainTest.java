@@ -9,7 +9,6 @@ import Task.Models.User;
 import Task.PageObject.HomePage;
 import Task.PageObject.LogInPage;
 import Task.PageObject.PostPage;
-import org.openqa.selenium.NoAlertPresentException;
 import org.openqa.selenium.WebDriver;
 import org.testng.Assert;
 import org.testng.annotations.AfterSuite;
@@ -29,7 +28,7 @@ public class MainTest {
 
     private String _commentText = ":D";
 
-    @BeforeSuite
+    @BeforeSuite (groups = "UI")
     public void setUp() throws Exception {
         _driver = DriverFactory.getDriver(DriverType.CHROME);
         _driver.manage().window().maximize();
@@ -38,7 +37,7 @@ public class MainTest {
 
     }
 
-    @Test//(dataProvider = "getOptions", dataProviderClass = DataProviders.class)
+    @Test(groups = "UI")//(dataProvider = "getOptions", dataProviderClass = DataProviders.class)
     public void logInCase(){
         _logInPage = new LogInPage();
         _logInPage.init(_driver);
@@ -58,7 +57,7 @@ public class MainTest {
                 + "\r\nExpected username: " + actualUsername);
     }
 
-    @Test
+    @Test(groups = "UI")
     public void seeSubscribedSubreddits() {
         _homePage = new HomePage();
         _homePage.init(_driver);
@@ -69,19 +68,19 @@ public class MainTest {
         System.out.println("Count of posts: " + countOfPosts);
     }
 
-    @Test(dependsOnMethods = "seeSubscribedSubreddits")
+    @Test(dependsOnMethods = "seeSubscribedSubreddits", groups = "UI")
     public void upVotePost() {
         boolean actionResult = _homePage.upVote();
         Assert.assertTrue(actionResult);
     }
 
-    @Test(dependsOnMethods = "seeSubscribedSubreddits")
+    @Test(dependsOnMethods = "seeSubscribedSubreddits", groups = "UI")
     public void downVotePost() {
         boolean actionResult = _homePage.downVote();
         Assert.assertTrue(actionResult);
     }
 
-    @Test(priority = 1)
+    @Test(priority = 1, groups = "UI")
     public void viewOneOfMySubscribedSubreddits(){
         int postNumber = 0;
         System.out.println("Number of post is: '" + postNumber + 1 + "'");
@@ -95,7 +94,7 @@ public class MainTest {
         Assert.assertTrue(currentUrl.contains(expectedPost));
     }
 
-    @Test(priority = 2)
+    @Test(priority = 2, groups = "UI")
     public void createComment() {
         _postPage = new PostPage();
         _postPage.init(_driver);
@@ -120,7 +119,7 @@ public class MainTest {
         Assert.assertTrue(userInfo.size() > 0);
     }
 
-    @AfterSuite
+    @AfterSuite(groups = "UI")
     public final void tearDown(){
         _driver.quit();
     }
